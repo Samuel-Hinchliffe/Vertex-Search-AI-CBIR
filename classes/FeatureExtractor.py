@@ -19,7 +19,8 @@ class FeatureExtractor:
      
         """
         base_model = ResNet50(weights='imagenet')
-        self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('predictions').output)
+        self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('avg_pool').output)
+        
 
     def extract(self, img):
         """
