@@ -1,32 +1,30 @@
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
+from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from tensorflow.keras.models import Model
 import numpy as np
 
 class FeatureExtractor:
     """
-    A class for extracting deep features from input images using the VGG16 model.
+    A class for extracting deep features from input images using the ResNet50 model.
 
     References:
-    - VGG16 Model Documentation: https://keras.io/api/applications/vgg/#vgg16-function
+    - ResNet50 Model Documentation: https://www.tensorflow.org/api_docs/python/tf/keras/applications/resnet50/ResNet50
     """
 
     def __init__(self):
         """
-        Initialize the FeatureExtractor with the VGG16 model.
-        The model is configured to extract features from an input image by obtaining the output of the 'fc1' layer,
-        which represents the raw features of the image. We don't care about the prediction, just the raw output
-        from the first fully connected layer of VGG16. 
-        
-        Those raw feature extracted from fc1 will be stored later on after normalization. 
+        Initialize the FeatureExtractor with the ResNet50 model.
+        The model is configured to extract features from an input image by obtaining the output of the 'avg_pool' layer,
+        which represents the raw features of the image. 
+     
         """
-        base_model = VGG16(weights='imagenet')
-        self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
+        base_model = ResNet50(weights='imagenet')
+        self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('predictions').output)
 
     def extract(self, img):
         """
         Extract a deep feature from an input image.
-        We're getting this from fc1 layer, our first fully connected layer in VGG16.
+        We're getting this from avg_pool, our best layer for feature representation ResNet50.
         Args:
             img: An image in PIL.Image format or loaded using tensorflow.keras.preprocessing.image.load_img.
 
@@ -36,7 +34,7 @@ class FeatureExtractor:
         References:
         - PIL.Image: https://pillow.readthedocs.io/en/stable/reference/Image.html
         - tensorflow.keras.preprocessing.image.load_img: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/image/load_img
-        - VGG16 Model Documentation: https://keras.io/api/applications/vgg/#vgg16-function
+        - ResNet50 Model Documentation: https://www.tensorflow.org/api_docs/python/tf/keras/applications/resnet50/ResNet50
         """
         
         # Resize the image to match the input size of VGG16 (224x224)

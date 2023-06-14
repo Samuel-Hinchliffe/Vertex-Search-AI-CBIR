@@ -33,6 +33,12 @@ This project does this in a simple manner you can use to learn from / use as a t
 4. python image_search_app_server.py (This will start the flask server)
 ```
 
+## 💻 Host using Docker
+```console
+1. docker build -t image-search-app . 
+2. docker run -p 8080:80 image-search-app
+```
+
 ## 🚩 Why CBIR?
 What is the point of <a href="https://en.wikipedia.org/wiki/Content-based_image_retrieval#:~:text=%22Content%2Dbased%22%20means%20that,derived%20from%20the%20image%20itself.">Content-based Image Recognition</a>? What does it really solve? 
 

@@ -34,9 +34,25 @@ from PIL import Image
 from classes.FeatureExtractor import FeatureExtractor
 from pathlib import Path
 import numpy as np
+import concurrent.futures
+
+def process_image(img_path, feature_extractor):
+    # Print the image file path
+    # print(img_path)
+
+    # Open the image using PIL
+    image = Image.open(img_path)
+
+    # Extract features from the image using the FeatureExtractor class
+    feature = feature_extractor.extract(img=image)
+
+    # Define the feature file path
+    feature_path = Path("./static/cache/") / (img_path.stem + ".npy")
+
+    # Save the extracted features to the feature file
+    np.save(feature_path, feature)
 
 def main():
-
     # Initialize the FeatureExtractor
     feature_extractor = FeatureExtractor()
 
@@ -46,32 +62,23 @@ def main():
     # Get the dataset directory (Your images!)
     dataset_dir = Path("./static/dataset")
 
-    # Iterate over all image files in the dataset directory
+    # Get the paths of all image files in the dataset directory
+    image_paths = []
     for extension in extensions:
-        
-        # Get the paths of the images. 
-        image_paths = sorted(dataset_dir.glob(f"*{extension}"))
-        
-        # Process all the images in the file. Save the deep features in a npy
-        # file. So that it will act as our cache / storage.
-        # See more: https://towardsdatascience.com/what-is-npy-files-and-why-you-should-use-them-603373c78883
+        image_paths.extend(dataset_dir.glob(f"*{extension}"))
+    
+    # Process all the images in parallel using multithreading
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Submit the image processing tasks to the executor
+        futures = []
         for img_path in image_paths:
-            
-            # Print the image file path (Helps you out)
-            print(img_path)
+            future = executor.submit(process_image, img_path, feature_extractor)
+            futures.append(future)
 
-            # Open the image using PIL
-            image = Image.open(img_path)
+        # Wait for all tasks to complete
+        for future in concurrent.futures.as_completed(futures):
+            future.result()
 
-            # Extract features from the image using the FeatureExtractor class
-            feature = feature_extractor.extract(img=image)
-
-            # Define the feature file path
-            feature_path = Path("./static/cache/") / (img_path.stem + ".npy")
-
-            # Save the extracted features to the feature file
-            np.save(feature_path, feature)
-
-
+# Example usage
 if __name__ == '__main__':
     main()
