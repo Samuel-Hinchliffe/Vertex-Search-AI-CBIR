@@ -54,6 +54,6 @@ def download_images_from_json(json_file_path, output_folder):
                 future.result()
 
 
-# urls = extract_urls_from_csv('dataset.csv')
-# write_urls_to_json(urls, 'images.json')
-# download_images_from_json('images.json', 'static/dataset')
+urls = extract_urls_from_csv('dorsiabc_dev__lookalike-230619.csv')
+write_urls_to_json(urls, 'images.json')
+download_images_from_json('images.json', 'static/dataset')

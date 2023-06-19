@@ -36,10 +36,9 @@ from pathlib import Path
 import numpy as np
 import concurrent.futures
 
-def process_image(img_path, feature_extractor):
-    # Print the image file path
-    # print(img_path)
 
+def process_image(img_path, feature_extractor):
+    
     # Open the image using PIL
     image = Image.open(img_path)
 
@@ -51,10 +50,16 @@ def process_image(img_path, feature_extractor):
 
     # Save the extracted features to the feature file
     np.save(feature_path, feature)
+    
+    # The garbage collector struggles to keep up,
+    # so we do our own cleanup. 
+    del image
+    del feature
+    del feature_path
 
 def main():
     # Initialize the FeatureExtractor
-    feature_extractor = FeatureExtractor()
+    feature_extractor = FeatureExtractor(gpu_mode = False)
 
     # Define the image file extensions to search for
     extensions = [".jpg", ".jpeg", ".webp", ".png"]
@@ -67,7 +72,11 @@ def main():
     for extension in extensions:
         image_paths.extend(dataset_dir.glob(f"*{extension}"))
     
-    # Process all the images in parallel using multithreading
+    # Process all the images in parallel using multithreading.
+    # When dealing with large datasets, it's important to think
+    # about the amount of time the i/o is blocked on the main thread.
+    # So with multithreading, we can do a lot better. Combined with GPU acceleration,
+    # it's hyper speed. 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit the image processing tasks to the executor
         futures = []

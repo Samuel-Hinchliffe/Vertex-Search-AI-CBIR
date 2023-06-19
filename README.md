@@ -26,12 +26,32 @@ This project does this in a simple manner you can use to learn from / use as a t
 ![img](./git/example.png)
 
 ## 💻 Usage
-```console
-1. Put your images (The ones you want to show the user when they upload an image) into the 'static/dataset' directory.
-2. pip install -r requirements.txt
-3. python image_feature_extractor.py (This will preprocess your images from .2)
-4. python image_search_app_server.py (This will start the flask server)
+1. Create a new directory for your project and navigate to it:
+```bash
+mkdir vertex_search_project
+cd vertex_search_project
+``` 
+2. Set up a virtual environment using your preferred tool (e.g., virtualenv, venv, or conda):
+```bash
+virtualenv venv
 ```
+
+3. Activate the virtual environment
+```bash 
+For Windows:
+venv\Scripts\activate
+
+For Linux:
+source venv/bin/activate
+```
+4. Install the required packages from the requirements.txt file:
+```bash
+pip install -r requirements.txt
+```
+5.  Put your images (The ones you want to show the user when they upload an image) into the 'static/dataset' directory.
+6. python image_feature_extractor.py (This will preprocess your images from .2)
+7. python image_search_app_server.py (This will start the flask server)
+
 
 ## 💻 Host using Docker
 ```console

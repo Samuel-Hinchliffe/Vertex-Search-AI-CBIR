@@ -37,12 +37,13 @@ from classes.FeatureExtractor import FeatureExtractor
 from datetime import datetime
 from flask import Flask, request, render_template
 from pathlib import Path
+import time
 
 app = Flask(__name__)
 
 # Initialize the FeatureExtractor, the features array that will
 # contain the features and the paths for all of our images.
-extractor = FeatureExtractor()
+extractor = FeatureExtractor(gpu_mode = False)
 features = []
 image_paths = []
 white_list = [".jpg", ".jpeg", ".png", ".webp"]
@@ -55,6 +56,8 @@ for cached_feature_path in cache_directory.glob("*.npy"):
     # Add the precomputed feature to the features array
     # for later use in Euclidean distance calculations.
     features.append(np.load(cached_feature_path))
+    # print(np.load(cached_feature_path).shape)
+    # exit()
 
     # Load the image that matches the feature
     img_path = None
@@ -90,11 +93,22 @@ def index():
         # Run the search
         # Extract features from the query image
         # More about feature extraction: https://en.wikipedia.org/wiki/Feature_extraction
-        query = extractor.extract(img)  
-
+        start_time = time.time()
+        query = extractor.extract(img)
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"Time taken for feature extraction: {time_taken} seconds")  
+        
+        # For Hardcoded vector compare. 
+        # query = np.load('./static/cache/529960-4020462-large.npy')
+        
         # Calculate the Euclidean distances between the query features and all the stored features
         # More about Euclidean distance: https://en.wikipedia.org/wiki/Euclidean_distance
+        start_time = time.time()
         dists = np.linalg.norm(features - query, axis=1)  
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"Time taken for euclidean distance: {time_taken} seconds")  
 
         # Sort the distances and retrieve the indices of the closest matches
          # More about argsort: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
