@@ -52,31 +52,18 @@ cache_directory = Path("./static/cache")
 dataset_directory = Path("./static/dataset")
 
 # Create a dictionary to map feature file names to image file names
-feature_to_image = {}
 
 for cached_feature_path in cache_directory.glob("*.npy"):
-    feature_file_name = cached_feature_path.stem
-    img_path = dataset_directory / (feature_file_name + ".jpg")
-    if img_path.is_file():
-        # Add the precomputed feature to the features array
-        features.append(np.load(cached_feature_path))
-
-        # Load the image that matches the feature
-        img_path = None
-        stem = cached_feature_path.stem
-
-        for ext in white_list:
-            img_file_path = dataset_directory / (stem + ext)
-            if img_file_path.is_file():
-                img_path = img_file_path
-                break
-
-        # If we have a valid image path, add it to the image_paths array
-        if img_path:
-            image_paths.append(img_path)
-            # Map the feature file name to the image file name
-            feature_to_image[stem] = img_path
-
+   
+    # Cross reference the cached feature and the loaded image
+    # to prevent mismatching vectors and images.
+    for ext in white_list:
+        img_file_path = dataset_directory / (cached_feature_path.stem + ext)
+        if img_file_path.is_file():
+            features.append(np.load(cached_feature_path))
+            image_paths.append(img_file_path)
+            break
+    
 # Convert the features array into a numpy array.
 features = np.array(features)
 
@@ -117,11 +104,10 @@ def index():
         # Sort the distances and retrieve the indices of the closest matches
         # More about argsort: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
         ids = np.argsort(dists)[:20]
-        print(ids)
 
         # Create a list of (distance, image_path) tuples for the top matching images.
         # Because we wish to display this information on the UI.
-        scores = [(dists[id], feature_to_image[image_paths[id].stem]) for id in ids]
+        scores = [(dists[id], image_paths[id]) for id in ids]
 
         # The 'scores' list now contains the top matching images along with their corresponding distances
         return render_template("index.html", query_path=upload_path, scores=scores)
