@@ -1,5 +1,4 @@
 Pillow
 Flask
-tensorflow >= 2.0.0
+tensorflow
 asyncio
-tensorflow-directml-plugin

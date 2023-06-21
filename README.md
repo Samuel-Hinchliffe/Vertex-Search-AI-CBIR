@@ -44,14 +44,23 @@ venv\Scripts\activate
 For Linux:
 source venv/bin/activate
 ```
-4. Install the required packages from the requirements.txt file:
+5. Install the required packages from the requirementsWindows.txt file if you're using Windows:
 ```bash
-pip install -r requirements.txt
+pip install -r requirementsWindows.txt
 ```
-5.  Put your images (The ones you want to show the user when they upload an image) into the 'static/dataset' directory.
-6. python image_feature_extractor.py (This will preprocess your images from .2)
-7. python image_search_app_server.py (This will start the flask server)
+6. Install the required packages from the requirementsWindows.txt file if you're using Windows:
+```bash
+pip install -r requirementsWindows.txt
+```
+7.  Put your images (The ones you want to show the user when they upload an image) into the 'static/dataset' directory.
+8. python image_feature_extractor.py (This will preprocess your images from .2)
+9. python image_search_app_server.py (This will start the flask server)
 
+## 💻 Usage & Development using Docker (Linux)
+```console
+1. docker build -t development_image -f DockerfileDevelopment .
+2. Run using: docker run -v "$(pwd)":/app -p 8888:5000 image_search_development python /app/ {filename}
+```
 
 ## 💻 Host using Docker
 ```console

@@ -36,7 +36,6 @@ from pathlib import Path
 import numpy as np
 import concurrent.futures
 
-
 def process_image(img_path, feature_extractor):
     
     # Open the image using PIL

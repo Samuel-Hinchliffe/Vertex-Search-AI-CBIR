@@ -184,3 +184,4 @@ cython_debug/
 *.npy
 static/cache - Internet/.gitkeep
 static/cache - Npy/.gitkeep
+static/cache - Silivu/.gitkeep

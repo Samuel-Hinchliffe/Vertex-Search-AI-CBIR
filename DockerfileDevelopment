@@ -1,0 +1,20 @@
+# Use the official Python base image with the desired version
+FROM python:3.9
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements.txt file to the container
+COPY requirements.txt .
+
+# Install the Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire project directory to the container
+# COPY . .
+
+# Expose the port your application listens on (if applicable)
+EXPOSE 80
+
+# Set the default Python file to be executed
+CMD ["python", "app.py"]
