@@ -43,7 +43,7 @@ app = Flask(__name__)
 
 # Initialize the FeatureExtractor, the features array that will
 # contain the features and the paths for all of our images.
-extractor = FeatureExtractor(gpu_mode = False)
+extractor = FeatureExtractor(gpu_mode=True)
 features = []
 image_paths = []
 white_list = [".jpg", ".jpeg", ".png", ".webp"]
@@ -51,29 +51,33 @@ white_list = [".jpg", ".jpeg", ".png", ".webp"]
 cache_directory = Path("./static/cache")
 dataset_directory = Path("./static/dataset")
 
+# Create a dictionary to map feature file names to image file names
+feature_to_image = {}
+
 for cached_feature_path in cache_directory.glob("*.npy"):
-    
-    # Add the precomputed feature to the features array
-    # for later use in Euclidean distance calculations.
-    features.append(np.load(cached_feature_path))
-    # print(np.load(cached_feature_path).shape)
-    # exit()
+    feature_file_name = cached_feature_path.stem
+    img_path = dataset_directory / (feature_file_name + ".jpg")
+    if img_path.is_file():
+        # Add the precomputed feature to the features array
+        features.append(np.load(cached_feature_path))
 
-    # Load the image that matches the feature
-    img_path = None
-    stem = cached_feature_path.stem
+        # Load the image that matches the feature
+        img_path = None
+        stem = cached_feature_path.stem
 
-    for ext in white_list:
-        img_file_path = dataset_directory / (stem + ext)
-        if img_file_path.is_file():
-            img_path = img_file_path
-            break
+        for ext in white_list:
+            img_file_path = dataset_directory / (stem + ext)
+            if img_file_path.is_file():
+                img_path = img_file_path
+                break
 
-    # If we have a valid image path, add it to the image_paths array
-    if img_path:
-        image_paths.append(img_path)
+        # If we have a valid image path, add it to the image_paths array
+        if img_path:
+            image_paths.append(img_path)
+            # Map the feature file name to the image file name
+            feature_to_image[stem] = img_path
 
-# Convert the features array into a numpy array. 
+# Convert the features array into a numpy array.
 features = np.array(features)
 
 @app.route("/", methods=["GET", "POST"])
@@ -97,26 +101,27 @@ def index():
         query = extractor.extract(img)
         end_time = time.time()
         time_taken = end_time - start_time
-        print(f"Time taken for feature extraction: {time_taken} seconds")  
-        
-        # For Hardcoded vector compare. 
-        # query = np.load('./static/cache/529960-4020462-large.npy')
-        
+        print(f"Time taken for feature extraction: {time_taken} seconds")
+
+        # For Hardcoded vector compare.
+        # query = np.load('./static/cache/529961-4020475-large.npy')
+
         # Calculate the Euclidean distances between the query features and all the stored features
         # More about Euclidean distance: https://en.wikipedia.org/wiki/Euclidean_distance
         start_time = time.time()
-        dists = np.linalg.norm(features - query, axis=1)  
+        dists = np.linalg.norm(features - query, axis=1)
         end_time = time.time()
         time_taken = end_time - start_time
-        print(f"Time taken for euclidean distance: {time_taken} seconds")  
+        print(f"Time taken for euclidean distance: {time_taken} seconds")
 
         # Sort the distances and retrieve the indices of the closest matches
-         # More about argsort: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
-        ids = np.argsort(dists)[:20] 
+        # More about argsort: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
+        ids = np.argsort(dists)[:20]
+        print(ids)
 
         # Create a list of (distance, image_path) tuples for the top matching images.
-        # Because we wish to display this information on the UI. 
-        scores = [(dists[id], image_paths[id]) for id in ids]
+        # Because we wish to display this information on the UI.
+        scores = [(dists[id], feature_to_image[image_paths[id].stem]) for id in ids]
 
         # The 'scores' list now contains the top matching images along with their corresponding distances
         return render_template("index.html", query_path=upload_path, scores=scores)

@@ -16,6 +16,8 @@ static/userUploads/*
 # Allow the .gitkeep file to be tracked
 !static/userUploads/.gitkeep
 
+./static/cache - Internet/*
+
 .history/*
 
 !/.gitignore
@@ -179,3 +181,6 @@ cython_debug/
 *.pyc
 *.csv
 *.pyc
+*.npy
+static/cache - Internet/.gitkeep
+static/cache - Npy/.gitkeep

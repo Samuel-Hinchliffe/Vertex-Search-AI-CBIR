@@ -4,6 +4,8 @@ import json
 import urllib.request
 import os
 from concurrent.futures import ThreadPoolExecutor
+from classes.FeatureExtractor import FeatureExtractor
+
 
 def extract_urls_from_csv(file_path):
     urls = []
