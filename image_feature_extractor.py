@@ -35,6 +35,7 @@ from classes.FeatureExtractor import FeatureExtractor
 from pathlib import Path
 import numpy as np
 import concurrent.futures
+# import sys
 
 def process_image(img_path, feature_extractor):
     
@@ -43,6 +44,9 @@ def process_image(img_path, feature_extractor):
 
     # Extract features from the image using the FeatureExtractor class
     feature = feature_extractor.extract(img=image)
+    # np.set_printoptions(threshold=sys.maxsize)
+    # print(feature)
+    # exit()
 
     # Define the feature file path
     feature_path = Path("./static/cache/") / (img_path.stem + ".npy")

@@ -40,10 +40,9 @@ from pathlib import Path
 import time
 
 app = Flask(__name__)
-
 # Initialize the FeatureExtractor, the features array that will
 # contain the features and the paths for all of our images.
-extractor = FeatureExtractor(gpu_mode=True)
+extractor = FeatureExtractor(gpu_mode=False)
 features = []
 image_paths = []
 white_list = [".jpg", ".jpeg", ".png", ".webp"]
