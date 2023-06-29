@@ -185,3 +185,6 @@ cython_debug/
 static/cache - Internet/.gitkeep
 static/cache - Npy/.gitkeep
 static/cache - Silivu/.gitkeep
+images.json
+q.py
+saved_vector.txt

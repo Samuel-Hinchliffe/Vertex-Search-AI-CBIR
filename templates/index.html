@@ -67,11 +67,16 @@
                             {% for score in scores %}
                             <div class="card">
                                 <div class="card-body">
-                                    <img src="{{ score[1] }}" style="
+                                    <img src="{{ score.payload.url }}" style="
                                         max-width: 200px;
                                         max-height: 200px;
                                     ">
-                                    <figcaption style="margin: 0px;">Distance: {{ score[0]|round(2) }}</figcaption>
+                                    <figcaption style="margin: 0px;">Distance: {{ score.score | round2 }}</figcaption>
+                                    <br>
+                                    {% for tags in score.payload.tags %}
+                                    
+                                    <figcaption style="margin: 0"> {{tags.prediction}} | {{ tags.confidence | round2}}</figcaption>
+                                    {% endfor %}
                                 </div>
                             </div>
                             {% endfor %}

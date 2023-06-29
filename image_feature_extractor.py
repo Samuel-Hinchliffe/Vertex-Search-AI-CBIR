@@ -35,7 +35,7 @@ from classes.FeatureExtractor import FeatureExtractor
 from pathlib import Path
 import numpy as np
 import concurrent.futures
-# import sys
+
 
 def process_image(img_path, feature_extractor):
     

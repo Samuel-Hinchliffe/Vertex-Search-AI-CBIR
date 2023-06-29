@@ -1,6 +1,7 @@
+# The FeatureExtractor class uses the ResNet50 model to extract deep features from input images.
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
+from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input, decode_predictions
 from tensorflow.keras.models import Model
 import numpy as np
 # print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
@@ -33,6 +34,7 @@ class FeatureExtractor:
         
         base_model = ResNet50(weights='imagenet')
         self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('avg_pool').output)
+        self.prediction_model = base_model
         self.gpu_mode = gpu_mode
         
 
@@ -81,3 +83,37 @@ class FeatureExtractor:
 
         return feature
 
+    def predict(self, img):
+            """
+            Perform image classification on the input image using the ResNet50 model.
+            Args:
+                img: An image in PIL.Image format or loaded using tensorflow.keras.preprocessing.image.load_img.
+
+            Returns:
+                predictions (list): A list of (class_label, probability) tuples representing the top predicted classes.
+            """
+            # Resize the image to match the input size of ResNet50 (224x224)
+            img = img.resize((224, 224))
+
+            # Convert the image to RGB color space
+            img = img.convert('RGB')
+
+            # Convert the image to a numpy array (Height x Width x Channel)
+            x = image.img_to_array(img)
+
+            # Expand dimensions to match the model input shape (1, H, W, C)
+            x = np.expand_dims(x, axis=0)
+
+            # Preprocess the input by subtracting average values for each pixel
+            x = preprocess_input(x)
+
+            if self.gpu_mode:
+                with tf.device('/GPU:0'):
+                    predictions = self.prediction_model.predict(x)
+            else:
+                predictions = self.prediction_model.predict(x)
+
+            # Decode the predictions to obtain the ImageNet class labels
+            decoded_predictions = decode_predictions(predictions, top=5)[0]
+
+            return decoded_predictions

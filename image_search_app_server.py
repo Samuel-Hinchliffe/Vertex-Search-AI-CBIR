@@ -38,33 +38,44 @@ from datetime import datetime
 from flask import Flask, request, render_template
 from pathlib import Path
 import time
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+from qdrant_client.http import models
+import json
 
 app = Flask(__name__)
+client = QdrantClient("localhost", port=6333)
+
 # Initialize the FeatureExtractor, the features array that will
 # contain the features and the paths for all of our images.
-extractor = FeatureExtractor(gpu_mode=False)
-features = []
-image_paths = []
-white_list = [".jpg", ".jpeg", ".png", ".webp"]
+extractor = FeatureExtractor(gpu_mode=True)
+# features = []
+# image_paths = []
+# white_list = [".jpg", ".jpeg", ".png", ".webp"]
 
-cache_directory = Path("./static/cache")
-dataset_directory = Path("./static/dataset")
+# cache_directory = Path("./static/cache")
+# dataset_directory = Path("./static/dataset")
 
-# Create a dictionary to map feature file names to image file names
+# # Create a dictionary to map feature file names to image file names
 
-for cached_feature_path in cache_directory.glob("*.npy"):
+# for cached_feature_path in cache_directory.glob("*.npy"):
    
-    # Cross reference the cached feature and the loaded image
-    # to prevent mismatching vectors and images.
-    for ext in white_list:
-        img_file_path = dataset_directory / (cached_feature_path.stem + ext)
-        if img_file_path.is_file():
-            features.append(np.load(cached_feature_path))
-            image_paths.append(img_file_path)
-            break
+#     # Cross reference the cached feature and the loaded image
+#     # to prevent mismatching vectors and images.
+#     for ext in white_list:
+#         img_file_path = dataset_directory / (cached_feature_path.stem + ext)
+#         if img_file_path.is_file():
+#             features.append(np.load(cached_feature_path))
+#             image_paths.append(img_file_path)
+#             break
     
-# Convert the features array into a numpy array.
-features = np.array(features)
+# # Convert the features array into a numpy array.
+# features = np.array(features)
+
+# Custom filter for rounding to 2 decimal places
+@app.template_filter('round2')
+def round2_filter(value):
+    return round(value, 3)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -95,21 +106,35 @@ def index():
         # Calculate the Euclidean distances between the query features and all the stored features
         # More about Euclidean distance: https://en.wikipedia.org/wiki/Euclidean_distance
         start_time = time.time()
-        dists = np.linalg.norm(features - query, axis=1)
+        
+        # dists = np.linalg.norm(features - query, axis=1)
+        
+        hits = client.search(
+            collection_name="vector_db_fcbp",
+            query_vector=query,
+            with_vectors=False,
+            with_payload=True,
+            limit=20,  # Return 5 closest points
+        )
+        
+        # print(hits)
+        # print(json.dumps(hits, default=lambda o: o.__dict__, 
+        #     sort_keys=True, indent=4))
+        
         end_time = time.time()
         time_taken = end_time - start_time
         print(f"Time taken for euclidean distance: {time_taken} seconds")
 
         # Sort the distances and retrieve the indices of the closest matches
         # More about argsort: https://numpy.org/doc/stable/reference/generated/numpy.argsort.html
-        ids = np.argsort(dists)[:20]
+        # ids = np.argsort(dists)[:20]
 
         # Create a list of (distance, image_path) tuples for the top matching images.
         # Because we wish to display this information on the UI.
-        scores = [(dists[id], image_paths[id]) for id in ids]
+        # scores = [(dists[id], image_paths[id]) for id in ids]
 
         # The 'scores' list now contains the top matching images along with their corresponding distances
-        return render_template("index.html", query_path=upload_path, scores=scores)
+        return render_template("index.html", query_path=upload_path, scores=hits)
     return render_template("index.html")
 
 if __name__ == "__main__":

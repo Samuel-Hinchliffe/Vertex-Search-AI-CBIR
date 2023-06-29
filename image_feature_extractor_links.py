@@ -42,8 +42,13 @@ import json
 import time
 import glob
 import os
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+from qdrant_client.http import models
 
-def process_image(img_url, feature_extractor, img_name):
+client = QdrantClient("localhost", port=6333)
+
+def process_image(img_url, feature_extractor, img_name, counter):
     
     # Download the image from the given URL
     response = requests.get(img_url)
@@ -55,18 +60,52 @@ def process_image(img_url, feature_extractor, img_name):
     # Extract features from the image using the FeatureExtractor class
     feature = feature_extractor.extract(img=image)
 
+    # Predictions
+    # Not optimised.
+    predictions = feature_extractor.predict(img=image)
+    
+    # labels 
+    text_predictions = []
+    for predict in predictions:
+        text_predictions.append({'prediction': predict[1], 'confidence': predict[2]})
+        
+    processed_text_predictions = []
+    for predict in text_predictions:
+        prediction = predict['prediction']
+        confidence = float(predict['confidence'])  # Convert to float
+
+        processed_text_predictions.append({'prediction': prediction, 'confidence': confidence})
+
+    feature_list = feature.tolist()
+    points = [ models.PointStruct(
+        id=counter,
+        vector=feature_list,
+        payload={
+            "file_name": img_name,
+            "url": img_url,
+            "tags": processed_text_predictions
+            },
+        )
+    ]
+    client.upsert(collection_name="vector_db_fcbp", points=points)
+
     # Define the feature file path
-    feature_path = Path("./static/cache/") / (img_name + ".npy")
+    # feature_path = Path("./static/cache/") / (img_name + ".npy")
 
     # Save the extracted features to the feature file
-    np.save(feature_path, feature)
+    # print('TES222T!')
+    # np.save(feature_path, feature)
+    
+
+
 
     # Clean up
     del image
     del feature
-    del feature_path
     
 def main():
+    
+    counter = 0
 
     # Initialize the FeatureExtractor
     feature_extractor = FeatureExtractor(gpu_mode=True)
@@ -83,7 +122,8 @@ def main():
         futures = []
         for img_url in image_urls:
             img_name = img_url.split("/")[-1].split(".")[0]
-            future = executor.submit(process_image, img_url, feature_extractor, img_name)
+            counter += 1
+            future = executor.submit(process_image, img_url, feature_extractor, img_name, counter)
             futures.append(future)
 
         # Wait for all tasks to complete
