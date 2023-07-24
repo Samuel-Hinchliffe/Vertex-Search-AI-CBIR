@@ -50,7 +50,7 @@ from config.qdrant_db import QD_DB_CONFIG
 # Firstly, what database do they wish to use?
 parser = argparse.ArgumentParser(description='Select database to search from')
 parser.add_argument('--db', choices=['local', 'milivus', 'qdrant'],
-                        default='qdrant', help='Select the desired database (local, milivus, or qdrant)')
+                        default='local', help='Select the desired database (local, milivus, or qdrant)')
 args = parser.parse_args()
 db_name = args.db
 
@@ -58,11 +58,11 @@ db_name = args.db
 app = Flask(__name__)
 
 if (db_name == 'qdrant'):
-    db = QdrantClient(QD_DB_CONFIG.host, port=QD_DB_CONFIG.port)
+    db = QdrantClient(QD_DB_CONFIG['host'], port=QD_DB_CONFIG['port'])
 
 if (db_name == 'milivus'):
-    connections.connect(host=MV_DB_CONFIG.host, port=MV_DB_CONFIG.port)
-    db = Collection(MV_DB_CONFIG.database)      # Get an existing collection.
+    connections.connect(host=MV_DB_CONFIG['host'], port=MV_DB_CONFIG['port'])
+    db = Collection(MV_DB_CONFIG['database'])      # Get an existing collection.
     db.load()
 
 # Initialize the FeatureExtractor, the features array that will
@@ -158,7 +158,7 @@ def index():
 
         if (db_name == 'qdrant'): 
             scores = db.search(
-                collection_name=QD_DB_CONFIG.database,
+                collection_name=QD_DB_CONFIG['database'],
                 query_vector=query,
                 with_vectors=False,
                 with_payload=True,

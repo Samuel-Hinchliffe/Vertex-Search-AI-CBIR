@@ -46,16 +46,16 @@ import uuid
 
 parser = argparse.ArgumentParser(description='Select database to search from')
 parser.add_argument('--db', choices=['local', 'milivus', 'qdrant'],
-                        default='qdrant', help='Select the desired database (local, milivus, or qdrant)')
+                        default='local', help='Select the desired database (local, milivus, or qdrant)')
 args = parser.parse_args()
 db_name = args.db
 
 if (db_name == 'qdrant'):
-    db = QdrantClient(QD_DB_CONFIG.host, port=QD_DB_CONFIG.port)
+    db = QdrantClient(QD_DB_CONFIG['host'], port=QD_DB_CONFIG['port'])
 
 if (db_name == 'milivus'):
-    connections.connect(host=MV_DB_CONFIG.host, port=MV_DB_CONFIG.port)
-    db = Collection(MV_DB_CONFIG.database)      # Get an existing collection.
+    connections.connect(host=MV_DB_CONFIG['host'], port=MV_DB_CONFIG['host'])
+    db = Collection(MV_DB_CONFIG['database'])      # Get an existing collection.
     db.load()
 
 
@@ -99,7 +99,7 @@ def process_image(img_path, feature_extractor):
                 },
             )
         ]
-        db.upsert(collection_name=QD_DB_CONFIG.database, points=points)
+        db.upsert(collection_name=QD_DB_CONFIG['database'], points=points)
         
     if (db_name == 'milivus'):
         feature_list = feature.tolist()
