@@ -35,6 +35,28 @@ from classes.FeatureExtractor import FeatureExtractor
 from pathlib import Path
 import numpy as np
 import concurrent.futures
+import argparse
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+from qdrant_client.http import models
+from pymilvus import connections, db, CollectionSchema, FieldSchema, DataType, Collection, utility 
+from config.milvius_db import MV_DB_CONFIG
+from config.qdrant_db import QD_DB_CONFIG
+import uuid
+
+parser = argparse.ArgumentParser(description='Select database to search from')
+parser.add_argument('--db', choices=['local', 'milivus', 'qdrant'],
+                        default='qdrant', help='Select the desired database (local, milivus, or qdrant)')
+args = parser.parse_args()
+db_name = args.db
+
+if (db_name == 'qdrant'):
+    db = QdrantClient(QD_DB_CONFIG.host, port=QD_DB_CONFIG.port)
+
+if (db_name == 'milivus'):
+    connections.connect(host=MV_DB_CONFIG.host, port=MV_DB_CONFIG.port)
+    db = Collection(MV_DB_CONFIG.database)      # Get an existing collection.
+    db.load()
 
 
 def process_image(img_path, feature_extractor):
@@ -44,19 +66,56 @@ def process_image(img_path, feature_extractor):
 
     # Extract features from the image using the FeatureExtractor class
     feature = feature_extractor.extract(img=image)
-    # np.set_printoptions(threshold=sys.maxsize)
-    # print(feature)
-    # exit()
+    
+    if (db_name == 'local'):
+        # Define the feature file path
+        feature_path = Path("./static/cache/") / (img_path.stem + ".npy")
+        # Save the extracted features to the feature file
+        np.save(feature_path, feature)
+        return True
 
-    # Define the feature file path
-    feature_path = Path("./static/cache/") / (img_path.stem + ".npy")
+    predictions = feature_extractor.predict(img=image)
+    
+    # labels 
+    text_predictions = []
+    for predict in predictions:
+        text_predictions.append({'prediction': predict[1], 'confidence': predict[2]})
+        
+    processed_text_predictions = []
+    for predict in text_predictions:
+        prediction = predict['prediction']
+        confidence = float(predict['confidence'])  # Convert to float
+        processed_text_predictions.append({'prediction': prediction, 'confidence': confidence})
 
-    # Save the extracted features to the feature file
-    np.save(feature_path, feature)
+    if (db_name == 'milivus'):
+        feature_list = feature.tolist()
+        points = [ models.PointStruct(
+            id=uuid.uuid4(),
+            vector=feature_list,
+            payload={
+                "file_name": img_path.stem,
+                "url": img_path,
+                "tags": processed_text_predictions
+                },
+            )
+        ]
+        db.upsert(collection_name=QD_DB_CONFIG.database, points=points)
+        
+    if (db_name == 'milivus'):
+        feature_list = feature.tolist()
+        points = {
+            "file_name": img_path.stem,
+            "product_url": img_path,
+            "product_image": img_path,
+            "tags": processed_text_predictions,
+            'vector': feature_list
+        }
+        db.insert(points)   
     
     # The garbage collector struggles to keep up,
     # so we do our own cleanup. 
     del image
+    del img_path
     del feature
     del feature_path
 

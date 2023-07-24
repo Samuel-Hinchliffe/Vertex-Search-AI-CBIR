@@ -4,7 +4,6 @@ import json
 import urllib.request
 import os
 from concurrent.futures import ThreadPoolExecutor
-from classes.FeatureExtractor import FeatureExtractor
 
 
 def extract_urls_from_csv(file_path):
@@ -15,7 +14,9 @@ def extract_urls_from_csv(file_path):
         
         for row in reader:
             # Assuming URLs are in a specific column, adjust the column index accordingly
-            text = row[2]
+            # text = row['url']
+            text = row[0]
+            # text = row[2]
             
             # Use regular expression to find URLs in the text
             url_matches = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
@@ -55,7 +56,26 @@ def download_images_from_json(json_file_path, output_folder):
             for future in futures:
                 future.result()
 
+def jsonlTojson():
+    # Open the JSONL file for reading
+    with open('input.jsonl', 'r') as file:
+        urls = []
 
-urls = extract_urls_from_csv('dorsiabc_dev__lookalike-230619.csv')
+        # Read each line (JSON object) in the file
+        for line in file:
+            data = json.loads(line)
+
+            # Extract the "originalSrc" value from the "image" object
+            url = data['image']['originalSrc']
+            urls.append(url)
+
+    # Create a dictionary with the URLs
+    output = {'urls': urls}
+
+    # Write the dictionary to the "images.json" file
+    with open('images.json', 'w') as file:
+        json.dump(output, file)
+
+urls = extract_urls_from_csv('dorsiabc__lookalike.csv')
 write_urls_to_json(urls, 'images.json')
-download_images_from_json('images.json', 'static/dataset')
+# download_images_from_json('images.json', 'static/dataset')

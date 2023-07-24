@@ -42,13 +42,19 @@ import json
 import time
 import glob
 import os
+import argparse
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
 from qdrant_client.http import models
+from pymilvus import connections, db, CollectionSchema, FieldSchema, DataType, Collection, utility 
+from guppy import hpy
 
+conn = connections.connect(host="127.0.0.1", port=19530)
+collection = Collection("image_vectors")
 client = QdrantClient("localhost", port=6333)
 
 def process_image(img_url, feature_extractor, img_name, counter):
+
     
     # Download the image from the given URL
     response = requests.get(img_url)
@@ -59,6 +65,9 @@ def process_image(img_url, feature_extractor, img_name, counter):
 
     # Extract features from the image using the FeatureExtractor class
     feature = feature_extractor.extract(img=image)
+    del image
+    del image_data
+    del response
 
     # Predictions
     # Not optimised.
@@ -73,11 +82,10 @@ def process_image(img_url, feature_extractor, img_name, counter):
     for predict in text_predictions:
         prediction = predict['prediction']
         confidence = float(predict['confidence'])  # Convert to float
-
         processed_text_predictions.append({'prediction': prediction, 'confidence': confidence})
 
     feature_list = feature.tolist()
-    points = [ models.PointStruct(
+    pointsX = [ models.PointStruct(
         id=counter,
         vector=feature_list,
         payload={
@@ -87,7 +95,25 @@ def process_image(img_url, feature_extractor, img_name, counter):
             },
         )
     ]
-    client.upsert(collection_name="vector_db_fcbp", points=points)
+    
+    points = {
+        "file_name": img_name,
+        "product_url": img_url,
+        "product_image": img_url,
+        "tags": processed_text_predictions,
+        'vector': feature_list
+    }
+    
+   
+    
+    client.upsert(collection_name="vector_db", points=pointsX)
+    collection.insert(points)    
+    del feature_list
+    del feature
+    del pointsX
+    del points
+    # collection.flush()
+    # print(mr)
 
     # Define the feature file path
     # feature_path = Path("./static/cache/") / (img_name + ".npy")
@@ -101,11 +127,13 @@ def process_image(img_url, feature_extractor, img_name, counter):
 
     # Clean up
     del image
+    del image_data
     del feature
-    
+    del response
+
 def main():
     
-    counter = 0
+    counter = 160543
 
     # Initialize the FeatureExtractor
     feature_extractor = FeatureExtractor(gpu_mode=True)
@@ -115,7 +143,14 @@ def main():
         data = json.load(f)
         image_urls = data["urls"]
 
+    print(len(image_urls))
     start_time = time.time()
+    image_urls = image_urls[160543:]
+    # print(len(new_list))
+    # print(len(image_urls))
+    # print(new_list[0])
+    # print(image_urls[0])
+    # exit()
     # Process all the images in parallel using multithreading
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Submit the image processing tasks to the executor

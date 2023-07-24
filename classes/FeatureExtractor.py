@@ -33,6 +33,8 @@ class FeatureExtractor:
                 print("GPU is not available. Using CPU.")
         
         base_model = ResNet50(weights='imagenet')
+         # Load the ResNet50 model without the top (classification) layers
+        
         self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('avg_pool').output)
         self.prediction_model = base_model
         self.gpu_mode = gpu_mode

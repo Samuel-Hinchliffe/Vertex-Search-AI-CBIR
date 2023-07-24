@@ -3,3 +3,4 @@ Flask
 tensorflow >= 2.0.0
 asyncio
 tensorflow-directml-plugin
+argparse
